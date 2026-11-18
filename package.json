@@ -1,0 +1,20 @@
+{
+  "name": "castaway-coop",
+  "version": "1.0.0",
+  "description": "Castaway Co-op - 3D browser multiplayer island survival game",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node test/smoke.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.7.5"
+  }
+}

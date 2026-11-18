@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b1620">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Castaway Co-op</title>
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": { "three": "/vendor/three/build/three.module.js", "three/addons/": "/vendor/three/addons/" } }
+</script>
+</head>
+<body>
+<canvas id="view"></canvas>
+
+<!-- ============ LOBBY ============ -->
+<div id="lobby" class="screen">
+  <div class="card lobby-card">
+    <h1>🏝️ Castaway Co-op</h1>
+    <p class="sub">Two survivors. One island. Gather, build, hunt, fish, and escape.</p>
+    <div class="tabs">
+      <button id="tabCreate" class="tab on">New island</button>
+      <button id="tabJoin" class="tab">Join island</button>
+    </div>
+    <label>Your name<input id="inName" maxlength="14" placeholder="e.g. Alex" autocomplete="nickname"></label>
+    <div id="paneCreate">
+      <label>Password <span class="opt">(optional)</span><input id="inPwCreate" type="password" maxlength="32" placeholder="Protect your island" autocomplete="new-password"></label>
+      <button id="btnCreate" class="btn primary">Create island</button>
+    </div>
+    <div id="paneJoin" hidden>
+      <label>Island code<input id="inCode" maxlength="11" placeholder="ISLE-4821" autocapitalize="characters" autocomplete="off"></label>
+      <label>Password <span class="opt">(if the island has one)</span><input id="inPwJoin" type="password" maxlength="32" autocomplete="current-password"></label>
+      <button id="btnJoin" class="btn primary">Join island</button>
+      <p class="hint">Coming back? Use the same code and your original name. You continue exactly where you left off.</p>
+    </div>
+    <p id="lobbyErr" class="err" role="alert"></p>
+    <details class="help">
+      <summary>How to play</summary>
+      <ul>
+        <li><b>Move</b> WASD / arrows, or the on-screen joystick. <b>Look</b> drag the screen. <b>Zoom</b> wheel / pinch.</li>
+        <li><b>E</b> or the big button: chop, mine, pick, hunt, drink, cook, sleep.</li>
+        <li><b>B</b> craft tools and build · <b>I</b> bag &amp; eat · <b>F</b> fish (face the sea) · <b>Enter</b> chat · <b>Shift</b> sprint.</li>
+        <li>Keep hunger, thirst, energy and warmth up. Nights are cold and wolves roam, so build a fire and a shelter.</li>
+        <li>Win by building the escape raft ⛵ or surviving 30 days.</li>
+      </ul>
+    </details>
+  </div>
+</div>
+
+<!-- ============ HUD ============ -->
+<div id="hud" hidden>
+  <div id="stats">
+    <div class="stat" data-k="hp"><i>❤️</i><b><span></span></b></div>
+    <div class="stat" data-k="hunger"><i>🍖</i><b><span></span></b></div>
+    <div class="stat" data-k="thirst"><i>💧</i><b><span></span></b></div>
+    <div class="stat" data-k="energy"><i>⚡</i><b><span></span></b></div>
+    <div class="stat" data-k="warmth"><i>🔥</i><b><span></span></b></div>
+  </div>
+  <div id="clock"><span id="clockIcon">☀️</span> <span id="clockText">Day 1 · 08:00</span></div>
+  <div id="topright">
+    <div id="roomtag"><button id="btnCode" title="Copy island code"><span id="codeText">ISLE-0000</span> 📋</button><span id="roster"></span></div>
+    <div id="toolbar">
+      <button id="btnBag" title="Bag (I)">🎒</button>
+      <button id="btnMake" title="Craft & build (B)">🔨</button>
+      <button id="btnChat" title="Chat (Enter)">💬</button>
+      <button id="btnMenu" title="Menu (Esc)">☰</button>
+    </div>
+  </div>
+  <canvas id="minimap" width="128" height="128"></canvas>
+  <div id="chatlog"></div>
+  <div id="toasts"></div>
+  <div id="prompt"></div>
+  <form id="chatForm" hidden><input id="chatInput" maxlength="140" placeholder="Say something…" autocomplete="off"><button class="btn">Send</button></form>
+  <div id="labels"></div>
+
+  <!-- touch controls -->
+  <div id="joyzone"><div id="joybase"><div id="joystick"></div></div></div>
+  <div id="actions">
+    <button id="btnSprint" class="round small">🏃</button>
+    <button id="btnFish" class="round small" hidden>🎣</button>
+    <button id="btnAct" class="round big"><span id="actLabel">✋</span></button>
+  </div>
+
+  <!-- placement bar -->
+  <div id="placeBar" hidden>
+    <span id="placeName"></span>
+    <button id="plRot" class="btn">⟳ Rotate (R)</button>
+    <button id="plOk" class="btn primary">✓ Place</button>
+    <button id="plNo" class="btn">✕</button>
+  </div>
+
+  <!-- panels -->
+  <div id="panel" class="screen" hidden><div class="card panel-card">
+    <div class="panel-head"><h2 id="panelTitle"></h2><button id="panelClose" class="x">✕</button></div>
+    <div id="panelBody"></div>
+  </div></div>
+
+  <div id="sleepOv" class="screen" hidden>
+    <div class="sleep-box">💤 Sleeping…<br><small>Everyone asleep = the night passes quickly</small><br><button id="btnWake" class="btn primary">Wake up</button></div>
+  </div>
+  <div id="winOv" class="screen" hidden><div class="card lobby-card center"><h1 id="winTitle"></h1><p id="winText" class="sub"></p><button id="btnWinClose" class="btn primary">Keep exploring</button></div></div>
+  <div id="conn" hidden>Reconnecting…</div>
+  <div id="hurtFlash"></div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/world.js"></script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
